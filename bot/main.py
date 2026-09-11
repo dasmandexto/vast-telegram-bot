@@ -22,7 +22,8 @@ async def main():
     logger = logging.getLogger("bot")
     logger.info("Starting Vast.ai Telegram Bot...")
 
-    bot = Bot(token=settings.telegram_bot_token, parse_mode=ParseMode.HTML)
+    from aiogram.client.default import DefaultBotProperties
+    bot = Bot(token=settings.telegram_bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=MemoryStorage())
 
     vast_client = VastApiClient(
