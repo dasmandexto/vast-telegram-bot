@@ -1,0 +1,1 @@
+"""Keyboards for Telegram bot."""
