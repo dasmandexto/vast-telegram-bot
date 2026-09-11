@@ -126,7 +126,7 @@ class VastApiClient:
 
     async def get_instances(self) -> List[Instance]:
         """Get all user instances (running, stopped, loading)."""
-        data = await self._request("GET", "/instances/", params={"owner": "me"})
+        data = await self._request("GET", "/api/v1/instances/", params={"owner": "me"})
         instances_raw = data.get("instances", []) if isinstance(data, dict) else data
         result = []
         for item in instances_raw:
@@ -139,7 +139,7 @@ class VastApiClient:
     async def get_instance(self, instance_id: int) -> Optional[Instance]:
         """Fetch details for a specific instance."""
         try:
-            data = await self._request("GET", f"/instances/{instance_id}/", params={"owner": "me"})
+            data = await self._request("GET", f"/api/v0/instances/{instance_id}/", params={"owner": "me"})
             inst = data.get("instances") or data
             if isinstance(inst, list) and inst:
                 return Instance(**inst[0])
@@ -232,11 +232,11 @@ class VastApiClient:
 
     async def stop_instance(self, instance_id: int) -> Dict[str, Any]:
         """Stop an active instance (pauses billing for GPU while keeping storage)."""
-        return await self._request("PUT", f"/instances/{instance_id}/", json_data={"state": "stopped"})
+        return await self._request("PUT", f"/api/v0/instances/{instance_id}/", json_data={"state": "stopped"})
 
     async def start_instance(self, instance_id: int) -> Dict[str, Any]:
         """Resume a stopped instance."""
-        return await self._request("PUT", f"/instances/{instance_id}/", json_data={"state": "running"})
+        return await self._request("PUT", f"/api/v0/instances/{instance_id}/", json_data={"state": "running"})
 
     async def reboot_instance(self, instance_id: int) -> Dict[str, Any]:
         """Reboot an instance machine."""
@@ -248,4 +248,4 @@ class VastApiClient:
         Works even when Docker image is actively loading/downloading to stop burning balance.
         DELETE /api/v0/instances/{id}/
         """
-        return await self._request("DELETE", f"/instances/{instance_id}/")
+        return await self._request("DELETE", f"/api/v0/instances/{instance_id}/")
