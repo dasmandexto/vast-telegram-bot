@@ -101,7 +101,12 @@ async def cb_select_offer_for_rent(call: CallbackQuery, state: FSMContext):
 
     text = (
         f"⚙️ <b>Настройка сервера (Оффер #{offer_id})</b>\n\n"
-        "<b>Шаг 1:</b> Выберите базовый Docker-образ или введите свой:"
+        "<b>Шаг 1:</b> Выберите базовый Docker-образ:\n\n"
+        "🔥 <b>PyTorch (latest)</b> - Идеально для дата-саентистов (чистая среда с Python и PyTorch)\n"
+        "⚡ <b>CUDA 12.2 + Ubuntu</b> - Максимально «голый» и гибкий сервер с драйверами NVIDIA\n"
+        "🦙 <b>Ollama LLM</b> - Самый простой способ запускать текстовые нейросети (Llama 3, Mistral)\n"
+        "🚀 <b>vLLM OpenAI Server</b> - Высокопроизводительный движок для запуска LLM в продакшене\n"
+        "🎨 <b>Stable Diffusion WebUI</b> - Готовый интерфейс для генерации картинок по тексту"
     )
     await call.message.edit_text(text, parse_mode="HTML", reply_markup=get_docker_presets_kb(offer_id))
     await call.answer()
@@ -231,8 +236,30 @@ async def cb_execute_rent(call: CallbackQuery, state: FSMContext, vast_client: V
     await call.message.edit_text("⏳ <i>Отправка команды аренды в Vast.ai API...</i>", parse_mode="HTML")
     await call.answer()
 
+    # Apply template-specific configuration
+    env = None
+    runtype = "ssh"
+    onstart_cmd = None
+
+    if "runpod/stable-diffusion" in image:
+        env = {"-p 3000:3000": 1, "-p 8080:8080": 1, "-e JUPYTER_PORT": "8080"}
+        runtype = "jupyter_proxy"
+    elif "ollama/ollama" in image:
+        env = {"-p 11434:11434": 1}
+    elif "vllm" in image:
+        env = {"-p 8000:8000": 1}
+    elif "pytorch" in image or "cuda" in image:
+        env = {"-p 8080:8080": 1} # For jupyter or custom APIs
+
     try:
-        res = await vast_client.create_instance(offer_id=offer_id, image=image, disk_space=disk_gb)
+        res = await vast_client.create_instance(
+            offer_id=offer_id, 
+            image=image, 
+            disk_space=disk_gb,
+            env=env,
+            runtype=runtype,
+            onstart_cmd=onstart_cmd
+        )
         new_id = res.get("new_contract") or res.get("id") or "создан"
 
         await state.clear()
